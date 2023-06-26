@@ -3,17 +3,19 @@
 
 """
 
-# Commented out IPython magic to ensure Python compatibility.
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 # %matplotlib inline
-from xgboost import XGBClassifier
 
 import seaborn as sns
 import tensorflow as tf
 
-df = pd.read_csv('Parkinsson disease.csv')
+import logging
+logging.basicConfig(filename='P-disease logs', level = logging.INFO, format = '%(asctime)s, %(name)s, %(message)s')
+logging.info('Logs started.')
+
+df = pd.read_csv('Parkinsson dataset.csv')
 
 df.head()
 
@@ -33,32 +35,35 @@ sns.heatmap(df.corr(), annot = True, cmap= "coolwarm")
 X = df.drop('status', axis = 1)
 Y = df['status']
 
-from sklearn.model_selection import train_test_split
-X_train, X_test, Y_train, Y_test = train_test_split(X,Y,test_size=0.25,random_state=101)
+try:
+  from sklearn.model_selection import train_test_split
+  X_train, X_test, Y_train, Y_test = train_test_split(X,Y,test_size=0.25,random_state=101)
+  
+  from sklearn.preprocessing import MinMaxScaler
+  scaler = MinMaxScaler()
 
-from sklearn.preprocessing import MinMaxScaler
-scaler = MinMaxScaler()
+  X_train_scaled = scaler.fit_transform(X_train)
+  X_test_scaled = scaler.transform(X_test)
 
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+  X_train_scaled.shape
 
-X_train_scaled.shape
+  from tensorflow.keras.models import Sequential
+  from tensorflow.keras.layers import Dense, Activation,Dropout
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Activation,Dropout
+  model = Sequential()
+  model.add(Dense(units=30,activation='relu'))
+  model.add(Dropout(0.2))
+  model.add(Dense(units=25,activation='relu'))
+  model.add(Dropout(0.2))
+  model.add(Dense(units=10,activation='relu'))
+  model.add(Dropout(0.2))
+  model.add(Dense(units=1,activation='sigmoid'))
 
-model = Sequential()
+  model.compile(loss='binary_crossentropy', optimizer='adam')
+  print('Model is working fine')
 
-model.add(Dense(units=30,activation='relu'))
-model.add(Dropout(0.2))
-model.add(Dense(units=25,activation='relu'))
-model.add(Dropout(0.2))
-model.add(Dense(units=10,activation='relu'))
-model.add(Dropout(0.2))
-
-model.add(Dense(units=1,activation='sigmoid'))
-
-model.compile(loss='binary_crossentropy', optimizer='adam')
+except Exception as e:
+  print('There is an exception')
 
 from tensorflow.keras.callbacks import EarlyStopping
 cb = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=10)
@@ -79,3 +84,4 @@ print(classification_report(Y_test,predictions))
 
 print(accuracy_score(Y_test,predictions))
 
+logging.info('Project successful.')
